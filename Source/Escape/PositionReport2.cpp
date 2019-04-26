@@ -30,8 +30,7 @@ void UPositionReport2::BeginPlay()
 	FString name = GetOwner()->GetName();
 	FVector pos = GetOwner()->GetTransform().GetLocation();
 
-	UE_LOG(LogTemp, Warning, TEXT("Hello233 from %s at %s"), *name, *pos.ToString());
-
+	UE_LOG(LogTemp, Warning, TEXT("Hello from %s at %s"), *name, *pos.ToString());
 }
 
 
