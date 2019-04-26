@@ -11,6 +11,12 @@ Content/StarterContent
 ######################
 # VS Generated Files #
 ######################
+
+# added .vs folder on 26.04.2019
+# As in a project reset, this gets deleted, we should not need it in version
+# control. It also adds up quite some space
+.vs
+
 *.VC.db
 *.suo
 *.VC.opendb
