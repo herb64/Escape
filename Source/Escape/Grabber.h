@@ -28,5 +28,8 @@ private:
 	APlayerController* playerCtrl;
 	FVector previousPosition;
 	FRotator previousRotation;
+
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
+	float fReach = 150.0f;
 		
 };

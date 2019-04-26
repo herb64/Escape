@@ -8,6 +8,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
+#include "Engine/Public/DrawDebugHelpers.h"		// e.g. DrawDebugLine
 
 
 // empty OUT macro to annotate passed references as output parameters which
@@ -44,6 +45,8 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		OUT position,
 		OUT rotation
 	);
+
+	// Log pos/rot if changed to previous tick
 	if (!position.Equals(previousPosition) || !(rotation.Equals(previousRotation)))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Grabber POS: %s, ROT: %s"), *position.ToString(), *rotation.ToString());
@@ -51,5 +54,20 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		previousRotation = rotation;
 	}
 	
+	FVector endpoint;
+	endpoint = position + rotation.Vector() * fReach;
+
+	// see also https://wiki.unrealengine.com/Draw_3D_Debug_Points,_Lines,_and_Spheres:_Visualize_Your_Algorithm_in_Action
+	DrawDebugLine(
+		GetWorld(),
+		position,
+		endpoint,
+		FColor::Yellow,
+		false,
+		-1.0f,
+		0,
+		3.0f);
+
+
 }
 
