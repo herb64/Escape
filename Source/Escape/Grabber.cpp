@@ -47,12 +47,12 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 	);
 
 	// Log pos/rot if changed to previous tick
-	if (!position.Equals(previousPosition) || !(rotation.Equals(previousRotation)))
+	/*if (!position.Equals(previousPosition) || !(rotation.Equals(previousRotation)))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Grabber POS: %s, ROT: %s"), *position.ToString(), *rotation.ToString());
 		previousPosition = position;
 		previousRotation = rotation;
-	}
+	}*/
 	
 	FVector endpoint;
 	endpoint = position + rotation.Vector() * fReach;
@@ -68,6 +68,23 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		0,
 		3.0f);
 
+	/// prepare a collision check for object type "PhysicsBody", which is set when
+	/// enabling Physics.
+	FCollisionQueryParams QueryParms(FName(TEXT("")), false, GetOwner());
+	FHitResult Hit;
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT Hit,
+		position,
+		endpoint,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+		QueryParms
+	);
+	
+	/// This is still ugly, we might make this nicer to report only changes of hitActor
+	AActor* hitActor = Hit.GetActor();
+	if (hitActor) {
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *hitActor->GetName());
+	}
 
 }
 
