@@ -39,7 +39,22 @@ void UGrabber::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("Physics handle of default pawn: %s"), *PhysicsHandle->GetName());
 	}
 	else {
-		UE_LOG(LogTemp, Error, TEXT("No physics handle on default pawn!"));
+		UE_LOG(LogTemp, Error, TEXT("No physics handle component on default pawn!"));
+	}
+
+	// Get pointer to input component, which only exists at play time
+	InputComponent = GetOwner()->FindComponentByClass<UInputComponent>();
+	if (InputComponent) {
+		UE_LOG(LogTemp, Warning, TEXT("Input component of default pawn: %s"), *InputComponent->GetName());
+
+		InputComponent->BindAction(
+			"Grab",
+			IE_Pressed,
+			this,
+			&UGrabber::Grab
+		);
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("No input component on default pawn!"));
 	}
 }
 
@@ -95,5 +110,10 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *hitActor->GetName());
 	}
 
+}
+
+void UGrabber::Grab()
+{
+	UE_LOG(LogTemp, Error, TEXT("Grab action triggered...."));
 }
 

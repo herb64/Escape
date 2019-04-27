@@ -7,6 +7,7 @@
 // IWYU
 #include "Components/ActorComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Components/InputComponent.h"
 
 // This one always LAST include
 #include "Grabber.generated.h"
@@ -38,5 +39,8 @@ private:
 	float fReach = 150.0f;
 
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
+	UInputComponent* InputComponent = nullptr;
+
+	void Grab();
 		
 };
