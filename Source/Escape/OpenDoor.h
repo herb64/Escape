@@ -11,6 +11,8 @@
 // this must be last include always
 #include "OpenDoor.generated.h"
 
+// For broadcasting to blueprint - no parameters here.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOpenRequest);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ESCAPE_API UOpenDoor : public UActorComponent
@@ -32,6 +34,9 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	// For blueprint assignment
+	UPROPERTY(BlueprintAssignable)
+	FOnOpenRequest OpenRequest;
 		
 // new private stuff for triggerplate and door handling
 private:

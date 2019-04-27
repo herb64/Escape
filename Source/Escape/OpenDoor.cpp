@@ -45,14 +45,18 @@ void UOpenDoor::BeginPlay()
 // into a separate function.
 void UOpenDoor::OpenDoor()
 {
-	// Just some test code
-	FRotator rotator = owner->GetActorRotation();
+	// Just some test code to be removed. might be used to rotate our picked object while carrying
+	/*FRotator rotator = owner->GetActorRotation();
 	float fRotationZ = rotator.GetComponentForAxis(EAxis::Z);
-	rotator.SetComponentForAxis(EAxis::Z, -50.0);
+	rotator.SetComponentForAxis(EAxis::Z, -50.0);*/
 
 	// NOTE: parameter order: Pitch, Yaw, Roll
 	// Actor StaticMeshComponent needs to be "Movable" in order to be rotated!
-	owner->SetActorRotation(FRotator(0.f, OpenAngle, 0.f));
+	//owner->SetActorRotation(FRotator(0.f, OpenAngle, 0.f));
+	
+	// Instead of opening here, broadcast our request and handle opening in blueprint
+	OpenRequest.Broadcast();
+
 	bIsOpen = true;
 }
 
