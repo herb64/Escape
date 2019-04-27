@@ -32,8 +32,6 @@ void UGrabber::BeginPlay()
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("Grabber for %s"), *GetOwner()->GetName());
 	playerCtrl = GetWorld()->GetFirstPlayerController();
-	/*previousPosition = FVector(0.f, 0.f, 0.f);
-	previousRotation = FRotator(0.f, 0.f, 0.f);*/
 
 	FindPhysicsHandleComponent();
 	SetupInputComponent();
@@ -46,27 +44,17 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 
 	/// New code will just check for an attached physics handle and move the object we carry. 
 	if (PhysicsHandle->GrabbedComponent) {
-
-		// UGLY CODE HERE TO GET ENDPOINT
-		FVector position;
-		FRotator rotation;
-		playerCtrl->GetPlayerViewPoint(
-			OUT position,
-			OUT rotation
-		);
-		FVector endpoint = position + rotation.Vector() * fReach;
-
-		PhysicsHandle->SetTargetLocation(endpoint);
+		//PhysicsHandle->SetTargetLocation(getLineTraceEndPoint());
+		PhysicsHandle->SetTargetLocation(getLineTracePoints().v2);
 	}
 }
 
-/// Grab function to pick an object
+// Grab function to pick an object
 void UGrabber::Grab()
 {
-	UE_LOG(LogTemp, Error, TEXT("Grab action triggered...."));
 	/// get any actors with physics body collision channel set
 	/// if found: attach a physics handle
-	
+	/// TIP: using auto to determine type
 	auto HitResult = GetFirstPhysicsBodyInReach();
 	auto ComponentToGrab = HitResult.GetComponent();
 	auto ActorHit = HitResult.GetActor();
@@ -83,10 +71,9 @@ void UGrabber::Grab()
 	}
 }
 
-/// Grab function to pick an object
+/// Release a picked object
 void UGrabber::Release()
 {
-	UE_LOG(LogTemp, Error, TEXT("Release action triggered...."));
 	PhysicsHandle->ReleaseComponent();
 }
 
@@ -124,10 +111,7 @@ void UGrabber::SetupInputComponent()
 void UGrabber::FindPhysicsHandleComponent()
 {
 	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-	if (PhysicsHandle) {
-		UE_LOG(LogTemp, Warning, TEXT("Physics handle of default pawn: %s"), *PhysicsHandle->GetName());
-	}
-	else {
+	if (PhysicsHandle == nullptr) {
 		UE_LOG(LogTemp, Error, TEXT("No physics handle component on default pawn!"));
 	}
 }
@@ -135,22 +119,22 @@ void UGrabber::FindPhysicsHandleComponent()
 /// Get the first Physics Body object in our reach
 const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 {
-	FVector position;
-	FRotator rotation;
-	playerCtrl->GetPlayerViewPoint(
-		OUT position,
-		OUT rotation
-	);
+	/*FVector position;
+	FVector endpoint;
+	getLineTracePoints(
+		OUT position, 
+		OUT endpoint
+	);*/
 
-	FVector endpoint = position + rotation.Vector() * fReach;
+	FTwoVectors traceLinePoints = getLineTracePoints();
 
 	// see also https://wiki.unrealengine.com/Draw_3D_Debug_Points,_Lines,_and_Spheres:_Visualize_Your_Algorithm_in_Action
 	// Now conditional config in BP and using lifetime now to keep it visible
 	if (bDrawDebugLine) {
 		DrawDebugLine(
 			GetWorld(),
-			position,
-			endpoint,
+			traceLinePoints.v1,
+			traceLinePoints.v2,
 			FColor::Yellow,
 			false,
 			4.0f,
@@ -164,17 +148,50 @@ const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 	FHitResult Hit;
 	GetWorld()->LineTraceSingleByObjectType(
 		OUT Hit,
-		position,
-		endpoint,
+		traceLinePoints.v1,
+		traceLinePoints.v2,
 		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
 		QueryParms
 	);
 
-	/// This is still ugly, we might make this nicer to report only changes of hitActor
-	/*AActor* hitActor = Hit.GetActor();
-	if (hitActor) {
-		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *hitActor->GetName());
-	}*/
 	return Hit;
 }
 
+
+/// LINE TRACING STUFF - better might be using FTwoVectors as return, avoiding passing references and changing them??
+/// https://api.unrealengine.com/INT/API/Runtime/Core/Math/FTwoVectors/index.html
+const FTwoVectors UGrabber::getLineTracePoints()
+{
+	FVector position;
+	FRotator rotation;
+	playerCtrl->GetPlayerViewPoint(
+		OUT position,
+		OUT rotation
+	);
+	return FTwoVectors(position, position + rotation.Vector() * fReach);
+}
+
+///// OLD CODE - replace by singe code using FTwoVectors
+// *Just getting the endpoint of a trace line. Variable fReach is used to determine length of vector!
+const FVector UGrabber::getLineTraceEndPoint() {
+	FVector position;
+	FRotator rotation;
+	playerCtrl->GetPlayerViewPoint(
+		OUT position,
+		OUT rotation
+	);
+	return position + rotation.Vector() * fReach;
+}
+
+// *Getting both, starting and end point of line trace. Variable fReach is used to determine length of vector!
+void UGrabber::getLineTracePoints(FVector &pos, FVector &end)
+{
+	FVector position;
+	FRotator rotation;
+	playerCtrl->GetPlayerViewPoint(
+		OUT position,
+		OUT rotation
+	);
+	pos = position;
+	end = position + rotation.Vector() * fReach;
+}
