@@ -34,6 +34,10 @@ void UOpenDoor::BeginPlay()
 		*name, 
 		*firstPlayerPawn->GetName()
 	);
+
+	if (pressurePlate == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("No pressure plate for door %s"), *name);
+	}
 }
 
 // TIP:
@@ -64,10 +68,8 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ugly code with polling here: on each tick, check, if our pawn overlaps
-	// with the pressurePlate
+	if (pressurePlate == nullptr) { return; }
 
-	//if (pressurePlate->IsOverlappingActor(firstPlayerPawn))
 	if (GetTotalMassOnPressurePlate() >= 40.0)
 	{
 		// We are overlapping: if door is closed, just open it
@@ -99,13 +101,15 @@ const float UOpenDoor::GetTotalMassOnPressurePlate()
 {
 	float mass = 0.0f;
 	TArray<AActor*> triggerArray;
-	pressurePlate->GetOverlappingActors(triggerArray);
-	for (auto &actor : triggerArray)
-	{
-		UPrimitiveComponent* comp = actor->FindComponentByClass<UPrimitiveComponent>();
-		if (comp) {
-			//UE_LOG(LogTemp, Error, TEXT("Array Element: %s"), *Iterator->GetName());
-			mass += comp->GetMass();
+	if (pressurePlate) {
+		pressurePlate->GetOverlappingActors(triggerArray);
+		for (auto &actor : triggerArray)
+		{
+			UPrimitiveComponent* comp = actor->FindComponentByClass<UPrimitiveComponent>();
+			if (comp) {
+				//UE_LOG(LogTemp, Error, TEXT("Array Element: %s"), *Iterator->GetName());
+				mass += comp->GetMass();
+			}
 		}
 	}
 	

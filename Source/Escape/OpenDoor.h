@@ -42,7 +42,7 @@ private:
 	float OpenAngle = 90.0f;
 
 	UPROPERTY(EditAnywhere)
-	ATriggerVolume* pressurePlate;
+	ATriggerVolume* pressurePlate = nullptr;
 
 	// make a member variable used by open/close instead of doing a query each time
 	AActor* owner;
