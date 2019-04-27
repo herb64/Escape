@@ -32,6 +32,15 @@ void UGrabber::BeginPlay()
 	playerCtrl = GetWorld()->GetFirstPlayerController();
 	previousPosition = FVector(0.f, 0.f, 0.f);
 	previousRotation = FRotator(0.f, 0.f, 0.f);
+
+	// Get pointer to Physics Handle Component
+	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+	if (PhysicsHandle) {
+		UE_LOG(LogTemp, Warning, TEXT("Physics handle of default pawn: %s"), *PhysicsHandle->GetName());
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("No physics handle on default pawn!"));
+	}
 }
 
 

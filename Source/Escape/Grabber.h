@@ -3,7 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+// IWYU
 #include "Components/ActorComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+
+// This one always LAST include
 #include "Grabber.generated.h"
 
 
@@ -31,5 +36,7 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
 	float fReach = 150.0f;
+
+	UPhysicsHandleComponent* PhysicsHandle = nullptr;
 		
 };
