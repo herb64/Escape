@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "Engine/Public/DrawDebugHelpers.h"		// e.g. DrawDebugLine
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Components/PrimitiveComponent.h"
 
 
 // empty OUT macro to annotate passed references as output parameters which
@@ -42,13 +44,20 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	/// New code will just check for an attached physics handle and move
-	/// the object we carry. 
+	/// New code will just check for an attached physics handle and move the object we carry. 
+	if (PhysicsHandle->GrabbedComponent) {
 
-	/// REST of code now in GetFirstPhysicsBodyInReach
+		// UGLY CODE HERE TO GET ENDPOINT
+		FVector position;
+		FRotator rotation;
+		playerCtrl->GetPlayerViewPoint(
+			OUT position,
+			OUT rotation
+		);
+		FVector endpoint = position + rotation.Vector() * fReach;
 
-	
-
+		PhysicsHandle->SetTargetLocation(endpoint);
+	}
 }
 
 /// Grab function to pick an object
@@ -57,14 +66,28 @@ void UGrabber::Grab()
 	UE_LOG(LogTemp, Error, TEXT("Grab action triggered...."));
 	/// get any actors with physics body collision channel set
 	/// if found: attach a physics handle
-	GetFirstPhysicsBodyInReach();
+	
+	auto HitResult = GetFirstPhysicsBodyInReach();
+	auto ComponentToGrab = HitResult.GetComponent();
+	auto ActorHit = HitResult.GetActor();
+	
+	// TODO: fixed rotator for now - make rotation to face ourselves always.
+	if (ActorHit) {
+		PhysicsHandle->GrabComponentAtLocationWithRotation(
+			ComponentToGrab,
+			NAME_None,
+			ComponentToGrab->GetOwner()->GetActorLocation(),
+			FRotator(0.0f, 0.0f, 0.0f)
+		);
+		UE_LOG(LogTemp, Warning, TEXT("Attaching Physics Handle for hit actor: %s"), *ActorHit->GetName());
+	}
 }
 
 /// Grab function to pick an object
 void UGrabber::Release()
 {
 	UE_LOG(LogTemp, Error, TEXT("Release action triggered...."));
-	/// If physics handle attached: detach
+	PhysicsHandle->ReleaseComponent();
 }
 
 
@@ -148,10 +171,10 @@ const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 	);
 
 	/// This is still ugly, we might make this nicer to report only changes of hitActor
-	AActor* hitActor = Hit.GetActor();
+	/*AActor* hitActor = Hit.GetActor();
 	if (hitActor) {
 		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *hitActor->GetName());
-	}
-	return FHitResult();
+	}*/
+	return Hit;
 }
 
