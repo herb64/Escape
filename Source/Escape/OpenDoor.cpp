@@ -10,6 +10,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/PrimitiveComponent.h"
 #include "Engine/World.h"
 
 // Sets default values for this component's properties
@@ -66,7 +67,8 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	// ugly code with polling here: on each tick, check, if our pawn overlaps
 	// with the pressurePlate
 
-	if (pressurePlate->IsOverlappingActor(firstPlayerPawn))
+	//if (pressurePlate->IsOverlappingActor(firstPlayerPawn))
+	if (GetTotalMassOnPressurePlate() >= 40.0)
 	{
 		// We are overlapping: if door is closed, just open it
 		if (!bIsOpen)
@@ -87,5 +89,26 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 		}
 	}
 
+}
+
+/// Add up mass for all Actors overlapping with the TriggerVolume
+/// https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/TArrays
+/// Make sure, all Actors have "Generate Overlap Events" checked in Collision settings!
+/// TODO: sometimes defaultpawn gets on moving slowly towards door wall... enlessly			PROBLEM - SAME DRIFTING IN COURSE AS WELL
+const float UOpenDoor::GetTotalMassOnPressurePlate()
+{
+	float mass = 0.0f;
+	TArray<AActor*> triggerArray;
+	pressurePlate->GetOverlappingActors(triggerArray);
+	for (auto &actor : triggerArray)
+	{
+		UPrimitiveComponent* comp = actor->FindComponentByClass<UPrimitiveComponent>();
+		if (comp) {
+			//UE_LOG(LogTemp, Error, TEXT("Array Element: %s"), *Iterator->GetName());
+			mass += comp->GetMass();
+		}
+	}
+	
+	return mass;
 }
 

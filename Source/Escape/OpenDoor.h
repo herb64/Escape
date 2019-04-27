@@ -58,4 +58,6 @@ private:
 	// This is the actor of the player - this is the pawn, casted as
 	// actor. Allowed, because a pawn IS AN ACTOR
 	AActor* firstPlayerPawn;
+
+	const float GetTotalMassOnPressurePlate();
 };
