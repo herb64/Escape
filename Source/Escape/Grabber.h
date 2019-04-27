@@ -26,14 +26,18 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void SetupInputComponent();
+
+	void FindPhysicsHandleComponent();
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
 	APlayerController* playerCtrl;
-	FVector previousPosition;
-	FRotator previousRotation;
+	/*FVector previousPosition;
+	FRotator previousRotation;*/
 
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
 	float fReach = 150.0f;
@@ -42,5 +46,10 @@ private:
 	UInputComponent* InputComponent = nullptr;
 
 	void Grab();
-		
+	void Release();
+
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "Debugline"))
+	bool bDrawDebugLine = true;
+
+	const FHitResult GetFirstPhysicsBodyInReach();
 };

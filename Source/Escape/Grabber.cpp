@@ -30,22 +30,51 @@ void UGrabber::BeginPlay()
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("Grabber for %s"), *GetOwner()->GetName());
 	playerCtrl = GetWorld()->GetFirstPlayerController();
-	previousPosition = FVector(0.f, 0.f, 0.f);
-	previousRotation = FRotator(0.f, 0.f, 0.f);
+	/*previousPosition = FVector(0.f, 0.f, 0.f);
+	previousRotation = FRotator(0.f, 0.f, 0.f);*/
 
-	// Get pointer to Physics Handle Component
-	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-	if (PhysicsHandle) {
-		UE_LOG(LogTemp, Warning, TEXT("Physics handle of default pawn: %s"), *PhysicsHandle->GetName());
-	}
-	else {
-		UE_LOG(LogTemp, Error, TEXT("No physics handle component on default pawn!"));
-	}
+	FindPhysicsHandleComponent();
+	SetupInputComponent();
+}
 
-	// Get pointer to input component, which only exists at play time
+// Called every frame
+void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	/// New code will just check for an attached physics handle and move
+	/// the object we carry. 
+
+	/// REST of code now in GetFirstPhysicsBodyInReach
+
+	
+
+}
+
+/// Grab function to pick an object
+void UGrabber::Grab()
+{
+	UE_LOG(LogTemp, Error, TEXT("Grab action triggered...."));
+	/// get any actors with physics body collision channel set
+	/// if found: attach a physics handle
+	GetFirstPhysicsBodyInReach();
+}
+
+/// Grab function to pick an object
+void UGrabber::Release()
+{
+	UE_LOG(LogTemp, Error, TEXT("Release action triggered...."));
+	/// If physics handle attached: detach
+}
+
+
+
+/// Prepare the input component
+void UGrabber::SetupInputComponent()
+{
 	InputComponent = GetOwner()->FindComponentByClass<UInputComponent>();
 	if (InputComponent) {
-		UE_LOG(LogTemp, Warning, TEXT("Input component of default pawn: %s"), *InputComponent->GetName());
+		//FInputActionBinding tmpBinding;
 
 		InputComponent->BindAction(
 			"Grab",
@@ -53,16 +82,36 @@ void UGrabber::BeginPlay()
 			this,
 			&UGrabber::Grab
 		);
-	} else {
-		UE_LOG(LogTemp, Error, TEXT("No input component on default pawn!"));
+
+		InputComponent->BindAction(
+			"Release",
+			IE_Pressed,
+			this,
+			&UGrabber::Release
+		);
+
+		//UE_LOG(LogTemp, Warning, TEXT("Bound Action: %s"), *tmpBinding.GetActionName().ToString());
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("No input component attached to default pawn!"));
 	}
 }
 
-
-// Called every frame
-void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+/// Get Physics Handle Component
+void UGrabber::FindPhysicsHandleComponent()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+	if (PhysicsHandle) {
+		UE_LOG(LogTemp, Warning, TEXT("Physics handle of default pawn: %s"), *PhysicsHandle->GetName());
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("No physics handle component on default pawn!"));
+	}
+}
+
+/// Get the first Physics Body object in our reach
+const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
+{
 	FVector position;
 	FRotator rotation;
 	playerCtrl->GetPlayerViewPoint(
@@ -70,27 +119,21 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		OUT rotation
 	);
 
-	// Log pos/rot if changed to previous tick
-	/*if (!position.Equals(previousPosition) || !(rotation.Equals(previousRotation)))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Grabber POS: %s, ROT: %s"), *position.ToString(), *rotation.ToString());
-		previousPosition = position;
-		previousRotation = rotation;
-	}*/
-	
-	FVector endpoint;
-	endpoint = position + rotation.Vector() * fReach;
+	FVector endpoint = position + rotation.Vector() * fReach;
 
 	// see also https://wiki.unrealengine.com/Draw_3D_Debug_Points,_Lines,_and_Spheres:_Visualize_Your_Algorithm_in_Action
-	DrawDebugLine(
-		GetWorld(),
-		position,
-		endpoint,
-		FColor::Yellow,
-		false,
-		-1.0f,
-		0,
-		3.0f);
+	// Now conditional config in BP and using lifetime now to keep it visible
+	if (bDrawDebugLine) {
+		DrawDebugLine(
+			GetWorld(),
+			position,
+			endpoint,
+			FColor::Yellow,
+			false,
+			4.0f,
+			0,
+			3.0f);
+	}
 
 	/// prepare a collision check for object type "PhysicsBody", which is set when
 	/// enabling Physics.
@@ -103,17 +146,12 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
 		QueryParms
 	);
-	
+
 	/// This is still ugly, we might make this nicer to report only changes of hitActor
 	AActor* hitActor = Hit.GetActor();
 	if (hitActor) {
 		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *hitActor->GetName());
 	}
-
-}
-
-void UGrabber::Grab()
-{
-	UE_LOG(LogTemp, Error, TEXT("Grab action triggered...."));
+	return FHitResult();
 }
 
