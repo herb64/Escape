@@ -41,10 +41,15 @@ private:
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
 	UInputComponent* InputComponent = nullptr;
 
+	// Note: it looks like if setting values for editable items here, they are used
+	// in editor as default, but editor changes are not reflected when playing.
+	// ?? https://forums.unrealengine.com/development-discussion/c-gameplay-programming/122958-uproperty-editanywhere-variable-when-changed-in-the-editor-dont-reflect-in-the-game
+	// Removing the UPROPERTY statements, recompile, then readd UPROPERTY statements again
+	// and everything works fine!
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
-	float fReach = 150.0f;
+	float fReach = 200;
 	
-	UPROPERTY(EditAnywhere, meta = (DisplayName = "Debugline"))
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "Draw Debug Line"))
 	bool bDrawDebugLine = true;
 
 	void Grab();
