@@ -1,5 +1,4 @@
-// This is our Custom Actor Component, that can be added to an Actor in the scene
-// within UE4 Editor. 
+// Custom C++ Actor Component to report current Position in log on BeginPlay
 // Copyright Herbert Mehlhose
 
 
@@ -11,11 +10,11 @@
 // Sets default values for this component's properties
 UPositionReport2::UPositionReport2()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	// Setting tick to false here for performance reasons. We only report once
+	// on BeginPlay, no tick needed.
+	// It's not that simple, log still written.
+	// https://answers.unrealengine.com/questions/601078/cannot-disable-actorcomponent-ticking.html
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 
@@ -24,12 +23,8 @@ void UPositionReport2::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	// FString: mutable
-	// see: https://wiki.unrealengine.com/index.php?title=Logs,_Printing_Messages_To_Yourself_During_Runtime
 	FString name = GetOwner()->GetName();
 	FVector pos = GetOwner()->GetTransform().GetLocation();
-
 	UE_LOG(LogTemp, Warning, TEXT("Hello from %s at %s"), *name, *pos.ToString());
 }
 
@@ -38,7 +33,6 @@ void UPositionReport2::BeginPlay()
 void UPositionReport2::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+	//UE_LOG(LogTemp, Warning, TEXT("TICK PositionReport2"));
 }
 

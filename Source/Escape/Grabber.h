@@ -26,6 +26,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void FindFirstPlayerController();
+
 	void SetupInputComponent();
 
 	void FindPhysicsHandleComponent();
@@ -35,23 +37,18 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	APlayerController* playerCtrl;
-
-	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
-	float fReach = 150.0f;
-
+	APlayerController* playerCtrl = nullptr;
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
 	UInputComponent* InputComponent = nullptr;
 
-	void Grab();
-	void Release();
-
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "Reach"))
+	float fReach = 150.0f;
+	
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "Debugline"))
 	bool bDrawDebugLine = true;
 
+	void Grab();
+	void Release();
 	const FHitResult GetFirstPhysicsBodyInReach();
-
-	const FVector getLineTraceEndPoint();
-	void getLineTracePoints(FVector &pos, FVector &end);
 	const FTwoVectors getLineTracePoints();
 };

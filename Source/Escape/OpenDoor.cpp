@@ -11,6 +11,8 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Components/PrimitiveComponent.h"
+#include "PhysicsEngine/PhysicsConstraintComponent.h"
+#include "Components/SphereComponent.h"
 #include "Engine/World.h"
 
 // Sets default values for this component's properties
@@ -26,44 +28,75 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Get the owner actor and name into private variables
-	owner = GetOwner();
-	name = owner->GetName();
+	name = GetOwner()->GetName();
 	firstPlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-	UE_LOG(LogTemp, Warning, TEXT("OpenDoor Component Constructor\nDoor: %s\nFirst Player Pawn: %s"), 
-		*name, 
-		*firstPlayerPawn->GetName()
-	);
+	if (firstPlayerPawn) {
+		UE_LOG(LogTemp, Warning, TEXT("OpenDoor Component: Door = %s, First Player Pawn = %s"),
+			*name,
+			*firstPlayerPawn->GetName()
+		);
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("NULL PTR for FirstPlayerPawn"), *name);
+	}
 
 	if (pressurePlate == nullptr) {
-		UE_LOG(LogTemp, Error, TEXT("No pressure plate for door %s"), *name);
+		UE_LOG(LogTemp, Error, TEXT("Door %s: missing Pressure Plate Trigger Volume"), *name);
+	}
+
+	/* E X P E R I M E N T S 
+	 * Just some testing for curiosity here: originally wanted to set the constraints
+	 * for physics (lock rotation) here to fix the drifting pawn. But it looks like
+	 * this cannot be set, although the Mode for example can be set...
+	 * TODO: investigate further at a later point, for now set in editor...
+	 */
+
+	// 1. Log a list of all components found for the default pawn actor
+	TSet<UActorComponent*> compset;
+	compset = firstPlayerPawn->GetComponents();
+	for (auto &comp : compset) {
+		if (comp) {
+			UE_LOG(LogTemp, Warning, TEXT("Component: %s"), *comp->GetName());
+		}
+	}
+
+	// 2. Get collision component for default pawn, which is a Sphere Component
+	USphereComponent* scomp = firstPlayerPawn->FindComponentByClass<USphereComponent>();
+	if (scomp) {
+		bool bPhysics = scomp->IsSimulatingPhysics(NAME_None);
+		// strange: can set constraint mode, or "simulate physics" - but not rotation constraints for axis
+		//scomp->SetConstraintMode(EDOFMode::XYPlane);
+		UE_LOG(LogTemp, Warning, TEXT("Found Sphere Component: %s, Simulating Physics = %s"), *scomp->GetName(), (bPhysics ? TEXT("True") : TEXT("False")));
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("NULL PTR for Sphere Component"));
+	}
+
+	// 3. Play with Physics Constraint stuff... ccomp not found at all...
+	UPhysicsConstraintComponent* ccomp = firstPlayerPawn->FindComponentByClass<UPhysicsConstraintComponent>();
+	if (ccomp) {
+		FConstraintInstance cinst = ccomp->ConstraintInstance;
+		float avgMass = cinst.AverageMass;
+		UE_LOG(LogTemp, Warning, TEXT("Mass value: %s"), avgMass);
+	}
+	else {
+		UE_LOG(LogTemp, Error, TEXT("NULL PTR for Constraint Component"));
 	}
 }
 
-// TIP:
-// This function has been created by selecting code lines, right click and doing a refactor
-// into a separate function.
+// Open the door by broadcasting request to Blueprint
 void UOpenDoor::OpenDoor()
 {
-	// Just some test code to be removed. might be used to rotate our picked object while carrying
-	/*FRotator rotator = owner->GetActorRotation();
-	float fRotationZ = rotator.GetComponentForAxis(EAxis::Z);
-	rotator.SetComponentForAxis(EAxis::Z, -50.0);*/
-
-	// NOTE: parameter order: Pitch, Yaw, Roll
-	// Actor StaticMeshComponent needs to be "Movable" in order to be rotated!
-	//owner->SetActorRotation(FRotator(0.f, OpenAngle, 0.f));
-	
-	// Instead of opening here, broadcast our request and handle opening in blueprint
+	// Old code for immediate rotation (parameter order: Pitch, Yaw, Roll)
+	//GetOwner->SetActorRotation(FRotator(0.f, OpenAngle, 0.f));
 	OpenRequest.Broadcast();
-
 	bIsOpen = true;
 }
 
-// Close the door
+// Close the door by broadcasting request to Blueprint
 void UOpenDoor::CloseDoor()
 {
-	owner->SetActorRotation(FRotator(0.f, 180.f, 0.f));
+	CloseRequest.Broadcast();
 	bIsOpen = false;
 }
 
@@ -100,7 +133,6 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 /// Add up mass for all Actors overlapping with the TriggerVolume
 /// https://docs.unrealengine.com/en-US/Programming/UnrealArchitecture/TArrays
 /// Make sure, all Actors have "Generate Overlap Events" checked in Collision settings!
-/// TODO: sometimes defaultpawn gets on moving slowly towards door wall... enlessly			PROBLEM - SAME DRIFTING IN COURSE AS WELL
 const float UOpenDoor::GetTotalMassOnPressurePlate()
 {
 	float mass = 0.0f;
@@ -111,7 +143,6 @@ const float UOpenDoor::GetTotalMassOnPressurePlate()
 		{
 			UPrimitiveComponent* comp = actor->FindComponentByClass<UPrimitiveComponent>();
 			if (comp) {
-				//UE_LOG(LogTemp, Error, TEXT("Array Element: %s"), *Iterator->GetName());
 				mass += comp->GetMass();
 			}
 		}

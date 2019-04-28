@@ -13,6 +13,7 @@
 
 // For broadcasting to blueprint - no parameters here.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOpenRequest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCloseRequest);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ESCAPE_API UOpenDoor : public UActorComponent
@@ -37,8 +38,10 @@ public:
 	// For blueprint assignment
 	UPROPERTY(BlueprintAssignable)
 	FOnOpenRequest OpenRequest;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnCloseRequest CloseRequest;
 		
-// new private stuff for triggerplate and door handling
 private:
 
 	/// VisibleAnywhere - not editable
@@ -50,7 +53,6 @@ private:
 	ATriggerVolume* pressurePlate = nullptr;
 
 	// make a member variable used by open/close instead of doing a query each time
-	AActor* owner;
 	FString name;
 	bool bIsOpen;
 
@@ -60,9 +62,8 @@ private:
 	
 	float fLastOpenTime;
 
-	// This is the actor of the player - this is the pawn, casted as
-	// actor. Allowed, because a pawn IS AN ACTOR
-	AActor* firstPlayerPawn;
+	// Cast Pawn as Actor - allowed, because a pawn IS AN ACTOR
+	AActor* firstPlayerPawn = nullptr;
 
 	const float GetTotalMassOnPressurePlate();
 };

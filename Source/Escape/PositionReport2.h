@@ -1,4 +1,5 @@
 // Copyright Herbert Mehlhose
+// Replacement for original PositionReport Code
 
 #pragma once
 
